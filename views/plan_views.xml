@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_maintenance_plan_list" model="ir.ui.view">
+        <field name="name">maintenance.plan.list</field>
+        <field name="model">maintenance.plan</field>
+        <field name="arch" type="xml">
+            <list string="Preventive Plans" decoration-danger="is_overdue" sample="1">
+                <field name="name"/>
+                <field name="asset_id"/>
+                <field name="technician_id" widget="many2one_avatar_user"/>
+                <field name="frequency"/>
+                <field name="interval"/>
+                <field name="last_maintenance_date" optional="show"/>
+                <field name="next_maintenance_date"/>
+                <field name="is_overdue" widget="boolean" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_maintenance_plan_form" model="ir.ui.view">
+        <field name="name">maintenance.plan.form</field>
+        <field name="model">maintenance.plan</field>
+        <field name="arch" type="xml">
+            <form string="Preventive Maintenance Plan">
+                <header>
+                    <button name="action_complete_maintenance" string="Mark Maintenance Done" type="object"
+                            class="btn-primary"
+                            confirm="Register the maintenance as done today and schedule the next one?"/>
+                    <button name="action_create_request" string="Generate Request" type="object"
+                            groups="smart_maintenance.group_maintenance_manager"/>
+                </header>
+                <sheet>
+                    <field name="is_manager" invisible="1"/>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <widget name="web_ribbon" title="Overdue" bg_color="text-bg-warning"
+                            invisible="not is_overdue or not active"/>
+                    <field name="active" invisible="1"/>
+                    <field name="is_overdue" invisible="1"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_requests" type="object" class="oe_stat_button" icon="fa-wrench">
+                            <field name="request_count" widget="statinfo" string="Requests"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Quarterly HVAC inspection" readonly="not is_manager"/></h1>
+                    </div>
+                    <group>
+                        <group string="What">
+                            <field name="asset_id" readonly="not is_manager"/>
+                            <field name="technician_id" widget="many2one_avatar_user" readonly="not is_manager"/>
+                        </group>
+                        <group string="When">
+                            <label for="interval" string="Repeat every"/>
+                            <div class="o_row">
+                                <field name="interval" readonly="not is_manager"/>
+                                <field name="frequency" readonly="not is_manager"/>
+                            </div>
+                            <field name="next_maintenance_date" readonly="not is_manager"/>
+                            <field name="last_maintenance_date"/>
+                            <field name="reminder_days" readonly="not is_manager"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="not is_manager"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Instructions" name="instructions">
+                            <field name="instructions" placeholder="Checklist / procedure to follow..."
+                                   readonly="not is_manager"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_maintenance_plan_search" model="ir.ui.view">
+        <field name="name">maintenance.plan.search</field>
+        <field name="model">maintenance.plan</field>
+        <field name="arch" type="xml">
+            <search string="Search Plans">
+                <field name="name"/>
+                <field name="asset_id"/>
+                <field name="technician_id"/>
+                <filter name="filter_my" string="My Plans" domain="[('technician_id', '=', uid)]"/>
+                <filter name="filter_overdue" string="Overdue" domain="[('is_overdue', '=', True)]"/>
+                <filter name="filter_due_soon" string="Due in 30 Days"
+                        domain="[('next_maintenance_date', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group string="Group By">
+                    <filter name="group_asset" string="Asset" context="{'group_by': 'asset_id'}"/>
+                    <filter name="group_technician" string="Technician" context="{'group_by': 'technician_id'}"/>
+                    <filter name="group_frequency" string="Frequency" context="{'group_by': 'frequency'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_maintenance_plan" model="ir.actions.act_window">
+        <field name="name">Preventive Plans</field>
+        <field name="res_model">maintenance.plan</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_maintenance_plan_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a preventive maintenance plan</p>
+            <p>Plans repeat at a fixed interval. When a maintenance is done, the next date is computed automatically
+               and a scheduled action reminds the technician before it is due.</p>
+        </field>
+    </record>
+</odoo>

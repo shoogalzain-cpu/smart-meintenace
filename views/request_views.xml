@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===================== LIST ===================== -->
+    <record id="view_maintenance_request_list" model="ir.ui.view">
+        <field name="name">maintenance.request.list</field>
+        <field name="model">maintenance.request</field>
+        <field name="arch" type="xml">
+            <list string="Maintenance Requests" sample="1"
+                  decoration-danger="priority == '3' and state not in ('completed', 'cancelled')"
+                  decoration-warning="is_overdue"
+                  decoration-muted="state in ('completed', 'cancelled')">
+                <field name="request_number"/>
+                <field name="name"/>
+                <field name="asset_id"/>
+                <field name="department_id" optional="show"/>
+                <field name="priority" widget="badge"
+                       decoration-danger="priority == '3'" decoration-warning="priority == '2'"
+                       decoration-info="priority == '1'"/>
+                <field name="requested_by" widget="many2one_avatar_user" optional="hide"/>
+                <field name="assigned_technician_id" widget="many2one_avatar_user"/>
+                <field name="request_date" optional="show"/>
+                <field name="expected_completion_date" optional="show"/>
+                <field name="is_overdue" column_invisible="True"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('new', 'under_review')"
+                       decoration-warning="state in ('assigned', 'waiting_parts')"
+                       decoration-primary="state == 'in_progress'"
+                       decoration-success="state == 'completed'"
+                       decoration-muted="state == 'cancelled'"/>
+                <field name="actual_cost" sum="Total Cost" optional="show"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="activity_ids" widget="list_activity" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ===================== FORM ===================== -->
+    <record id="view_maintenance_request_form" model="ir.ui.view">
+        <field name="name">maintenance.request.form</field>
+        <field name="model">maintenance.request</field>
+        <field name="arch" type="xml">
+            <form string="Maintenance Request">
+                <header>
+                    <button name="action_review" string="Start Review" type="object" class="btn-primary"
+                            invisible="state != 'new'" groups="smart_maintenance.group_maintenance_manager"/>
+                    <button name="action_assign" string="Assign" type="object" class="btn-primary"
+                            invisible="state != 'under_review'" groups="smart_maintenance.group_maintenance_manager"/>
+                    <button name="action_start" string="Start Work" type="object" class="btn-primary"
+                            invisible="state != 'assigned'"/>
+                    <button name="action_wait_parts" string="Waiting Parts" type="object"
+                            invisible="state != 'in_progress'"/>
+                    <button name="action_resume" string="Resume Work" type="object" class="btn-primary"
+                            invisible="state != 'waiting_parts'"/>
+                    <button name="action_complete" string="Complete" type="object" class="btn-success"
+                            invisible="state != 'in_progress'"
+                            confirm="Complete this request? It will become read-only."/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('completed', 'cancelled')"
+                            groups="smart_maintenance.group_maintenance_manager"
+                            confirm="Cancel this request?"/>
+                    <button name="action_reset_to_new" string="Reset to New" type="object"
+                            invisible="state != 'cancelled'" groups="smart_maintenance.group_maintenance_manager"/>
+                    <button name="%(smart_maintenance.action_report_maintenance_request)d" string="Print" type="action"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="new,under_review,assigned,in_progress,completed"/>
+                </header>
+                <sheet>
+                    <field name="is_manager" invisible="1"/>
+                    <field name="is_overdue" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <widget name="web_ribbon" title="Overdue" bg_color="text-bg-warning"
+                            invisible="not is_overdue"/>
+                    <widget name="web_ribbon" title="Critical" bg_color="text-bg-danger"
+                            invisible="priority != '3' or is_overdue or state in ('completed', 'cancelled')"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_asset" type="object" class="oe_stat_button" icon="fa-cubes">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Asset</span>
+                                <span class="o_stat_value"><field name="asset_code"/></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="request_number" readonly="1"/></h1>
+                        <h2><field name="name" placeholder="e.g. Air conditioner not cooling"
+                                   readonly="state in ('completed', 'cancelled')"/></h2>
+                    </div>
+                    <group>
+                        <group name="left" string="Request">
+                            <field name="asset_id" readonly="state in ('completed', 'cancelled')"/>
+                            <field name="requested_by" readonly="state in ('completed', 'cancelled')"
+                                   widget="many2one_avatar_user"/>
+                            <field name="department_id" readonly="state in ('completed', 'cancelled')"/>
+                            <field name="request_type" readonly="state in ('completed', 'cancelled')"/>
+                            <field name="plan_id" invisible="not plan_id" readonly="1"/>
+                        </group>
+                        <group name="right" string="Planning">
+                            <field name="priority" widget="priority" readonly="state in ('completed', 'cancelled')"/>
+                            <field name="request_date" readonly="state in ('completed', 'cancelled')"/>
+                            <field name="assigned_technician_id" widget="many2one_avatar_user"
+                                   readonly="state in ('completed', 'cancelled') or not is_manager"/>
+                            <field name="expected_completion_date" readonly="state in ('completed', 'cancelled')"/>
+                            <field name="actual_completion_date" invisible="state != 'completed'"/>
+                            <field name="maintenance_duration" invisible="state != 'completed'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the problem..."
+                                   readonly="state in ('completed', 'cancelled')"/>
+                        </page>
+                        <page string="Parts" name="parts">
+                            <field name="part_ids" readonly="state in ('completed', 'cancelled') or not is_manager">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_name"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_cost"/>
+                                    <field name="total_cost" sum="Parts Total"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Costs" name="costs">
+                            <group>
+                                <group>
+                                    <field name="estimated_cost" readonly="state in ('completed', 'cancelled') or not is_manager"/>
+                                    <field name="service_cost" readonly="state in ('completed', 'cancelled') or not is_manager"/>
+                                </group>
+                                <group>
+                                    <field name="parts_cost"/>
+                                    <field name="actual_cost" class="fw-bold"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Resolution" name="resolution">
+                            <field name="resolution_notes" placeholder="What was done to fix the problem?"
+                                   readonly="state in ('completed', 'cancelled')"/>
+                        </page>
+                        <page string="Other Info" name="other" groups="base.group_multi_company">
+                            <group><field name="company_id"/></group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===================== KANBAN ===================== -->
+    <record id="view_maintenance_request_kanban" model="ir.ui.view">
+        <field name="name">maintenance.request.kanban</field>
+        <field name="model">maintenance.request</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" group_create="false" records_draggable="false"
+                    quick_create="false" sample="1">
+                <field name="priority"/>
+                <field name="is_overdue"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="#{record.priority.raw_value == '3' ? 'border-start border-4 border-danger ps-2' : ''}">
+                            <div class="d-flex justify-content-between">
+                                <field name="request_number" class="fw-bold"/>
+                                <field name="priority" widget="priority"/>
+                            </div>
+                            <field name="name" class="d-block"/>
+                            <div class="text-muted small"><i class="fa fa-cube me-1"/><field name="asset_id"/></div>
+                            <div class="mt-1">
+                                <span t-if="record.priority.raw_value == '3'" class="badge text-bg-danger me-1">Critical</span>
+                                <span t-if="record.is_overdue.raw_value" class="badge text-bg-warning">Overdue</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <field name="actual_cost" widget="monetary"/>
+                                <field name="assigned_technician_id" widget="many2one_avatar_user"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ===================== GRAPH / PIVOT ===================== -->
+    <record id="view_maintenance_request_graph" model="ir.ui.view">
+        <field name="name">maintenance.request.graph</field>
+        <field name="model">maintenance.request</field>
+        <field name="arch" type="xml">
+            <graph string="Maintenance Analysis" type="bar">
+                <field name="state"/>
+                <field name="actual_cost" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_maintenance_request_pivot" model="ir.ui.view">
+        <field name="name">maintenance.request.pivot</field>
+        <field name="model">maintenance.request</field>
+        <field name="arch" type="xml">
+            <pivot string="Maintenance Analysis">
+                <field name="department_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="actual_cost" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ===================== SEARCH ===================== -->
+    <record id="view_maintenance_request_search" model="ir.ui.view">
+        <field name="name">maintenance.request.search</field>
+        <field name="model">maintenance.request</field>
+        <field name="arch" type="xml">
+            <search string="Search Requests">
+                <field name="name" string="Request"
+                       filter_domain="['|', '|', ('name', 'ilike', self), ('request_number', 'ilike', self), ('asset_id', 'ilike', self)]"/>
+                <field name="asset_id"/>
+                <field name="assigned_technician_id"/>
+                <field name="requested_by"/>
+                <field name="department_id"/>
+                <filter name="filter_my" string="My Requests"
+                        domain="['|', ('assigned_technician_id', '=', uid), ('requested_by', '=', uid)]"/>
+                <separator/>
+                <filter name="filter_open" string="Open Requests"
+                        domain="[('state', 'not in', ['completed', 'cancelled'])]"/>
+                <filter name="filter_critical" string="Critical" domain="[('priority', '=', '3')]"/>
+                <filter name="filter_high" string="High Priority" domain="[('priority', '=', '2')]"/>
+                <filter name="filter_overdue" string="Overdue" domain="[('is_overdue', '=', True)]"/>
+                <filter name="filter_completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <separator/>
+                <filter name="filter_this_month" string="This Month"
+                        domain="[('request_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d')),
+                                 ('request_date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+                <group string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_priority" string="Priority" context="{'group_by': 'priority'}"/>
+                    <filter name="group_technician" string="Technician" context="{'group_by': 'assigned_technician_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_asset" string="Asset" context="{'group_by': 'asset_id'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'request_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===================== ACTIONS ===================== -->
+    <record id="action_maintenance_request" model="ir.actions.act_window">
+        <field name="name">Maintenance Requests</field>
+        <field name="res_model">maintenance.request</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="search_view_id" ref="view_maintenance_request_search"/>
+        <field name="context">{'search_default_filter_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first maintenance request</p>
+            <p>Report a problem on an asset. Managers review it, assign a technician and follow the work until completion.</p>
+        </field>
+    </record>
+
+    <record id="action_maintenance_request_analysis" model="ir.actions.act_window">
+        <field name="name">Maintenance Analysis</field>
+        <field name="res_model">maintenance.request</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="search_view_id" ref="view_maintenance_request_search"/>
+        <field name="context">{'search_default_group_state': 1}</field>
+    </record>
+</odoo>

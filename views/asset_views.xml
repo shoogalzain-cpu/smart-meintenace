@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===================== LIST ===================== -->
+    <record id="view_maintenance_asset_list" model="ir.ui.view">
+        <field name="name">maintenance.asset.list</field>
+        <field name="model">maintenance.asset</field>
+        <field name="arch" type="xml">
+            <list string="Assets" decoration-muted="status == 'retired'" sample="1">
+                <field name="asset_code"/>
+                <field name="name"/>
+                <field name="asset_type" widget="badge"/>
+                <field name="serial_number" optional="show"/>
+                <field name="location" optional="show"/>
+                <field name="department_id" optional="show"/>
+                <field name="responsible_employee_id" optional="show"/>
+                <field name="warranty_expiry" optional="hide"/>
+                <field name="open_request_count" string="Open Requests" optional="show"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'active'"
+                       decoration-warning="status == 'under_maintenance'"
+                       decoration-muted="status == 'retired'"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ===================== FORM ===================== -->
+    <record id="view_maintenance_asset_form" model="ir.ui.view">
+        <field name="name">maintenance.asset.form</field>
+        <field name="model">maintenance.asset</field>
+        <field name="arch" type="xml">
+            <form string="Asset">
+                <header>
+                    <field name="status" widget="statusbar"
+                           statusbar_visible="active,under_maintenance,retired"
+                           options="{'clickable': '1'}" readonly="not is_manager"/>
+                </header>
+                <sheet>
+                    <field name="is_manager" invisible="1"/>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_requests" type="object" class="oe_stat_button" icon="fa-wrench">
+                            <field name="total_request_count" widget="statinfo" string="Total Requests"/>
+                        </button>
+                        <button name="action_view_open_requests" type="object" class="oe_stat_button" icon="fa-folder-open-o">
+                            <field name="open_request_count" widget="statinfo" string="Open Requests"/>
+                        </button>
+                        <button name="action_view_plans" type="object" class="oe_stat_button" icon="fa-calendar-check-o"
+                                invisible="plan_count == 0">
+                            <field name="plan_count" widget="statinfo" string="Plans"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <span class="o_form_label">Asset</span>
+                        <h1><field name="asset_code" readonly="1"/></h1>
+                        <h2><field name="name" placeholder="e.g. Rooftop air conditioner" readonly="not is_manager"/></h2>
+                    </div>
+                    <group>
+                        <group string="Identification">
+                            <field name="asset_type" readonly="not is_manager"/>
+                            <field name="serial_number" readonly="not is_manager"/>
+                            <field name="location" readonly="not is_manager"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Ownership">
+                            <field name="department_id" readonly="not is_manager"/>
+                            <field name="responsible_employee_id" readonly="not is_manager"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="not is_manager"/>
+                        </group>
+                        <group string="Life Cycle">
+                            <field name="purchase_date" readonly="not is_manager"/>
+                            <field name="warranty_expiry" readonly="not is_manager"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Maintenance Requests" name="requests">
+                            <field name="request_ids" readonly="1">
+                                <list decoration-danger="priority == '3' and state not in ('completed','cancelled')"
+                                      decoration-muted="state in ('completed','cancelled')">
+                                    <field name="request_number"/>
+                                    <field name="name"/>
+                                    <field name="priority" widget="badge"
+                                           decoration-danger="priority == '3'" decoration-warning="priority == '2'"
+                                           decoration-info="priority == '1'"/>
+                                    <field name="assigned_technician_id" widget="many2one_avatar_user"/>
+                                    <field name="request_date"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="actual_cost" sum="Total"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Internal notes about this asset..." readonly="not is_manager"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===================== KANBAN ===================== -->
+    <record id="view_maintenance_asset_kanban" model="ir.ui.view">
+        <field name="name">maintenance.asset.kanban</field>
+        <field name="model">maintenance.asset</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="asset_type" sample="1">
+                <field name="status"/>
+                <field name="open_request_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span t-if="record.status.raw_value == 'active'" class="badge text-bg-success">Active</span>
+                            <span t-elif="record.status.raw_value == 'under_maintenance'" class="badge text-bg-warning">Under Maintenance</span>
+                            <span t-else="" class="badge text-bg-secondary">Retired</span>
+                        </div>
+                        <div class="text-muted"><field name="asset_code"/></div>
+                        <div t-if="record.location.raw_value"><i class="fa fa-map-marker me-1"/><field name="location"/></div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span t-if="record.open_request_count.raw_value" class="badge text-bg-danger">
+                                <t t-out="record.open_request_count.raw_value"/> open
+                            </span>
+                            <span t-else="" class="text-muted small">No open request</span>
+                            <field name="responsible_employee_id"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ===================== SEARCH ===================== -->
+    <record id="view_maintenance_asset_search" model="ir.ui.view">
+        <field name="name">maintenance.asset.search</field>
+        <field name="model">maintenance.asset</field>
+        <field name="arch" type="xml">
+            <search string="Search Assets">
+                <field name="name" string="Asset"
+                       filter_domain="['|', '|', ('name', 'ilike', self), ('asset_code', 'ilike', self), ('serial_number', 'ilike', self)]"/>
+                <field name="department_id"/>
+                <field name="responsible_employee_id"/>
+                <field name="location"/>
+                <filter name="filter_active" string="Active" domain="[('status', '=', 'active')]"/>
+                <filter name="filter_under_maintenance" string="Under Maintenance" domain="[('status', '=', 'under_maintenance')]"/>
+                <filter name="filter_retired" string="Retired" domain="[('status', '=', 'retired')]"/>
+                <separator/>
+                <filter name="filter_warranty_expiring" string="Warranty Expiring (30 days)"
+                        domain="[('warranty_expiry', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                 ('warranty_expiry', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_has_open_requests" string="With Open Requests" domain="[('request_ids.state', 'in', ['new', 'under_review', 'assigned', 'in_progress', 'waiting_parts'])]"/>
+                <separator/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group string="Group By">
+                    <filter name="group_type" string="Type" context="{'group_by': 'asset_type'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_location" string="Location" context="{'group_by': 'location'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===================== ACTION ===================== -->
+    <record id="action_maintenance_asset" model="ir.actions.act_window">
+        <field name="name">Assets</field>
+        <field name="res_model">maintenance.asset</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_maintenance_asset_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Register your first asset</p>
+            <p>Assets are the equipment, vehicles, computers and facilities you maintain.
+               Each one gets an automatic code (AST/0001...).</p>
+        </field>
+    </record>
+</odoo>

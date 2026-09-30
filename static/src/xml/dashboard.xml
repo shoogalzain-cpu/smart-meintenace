@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="smart_maintenance.Dashboard">
+        <div class="o_sm_dashboard o_action overflow-auto p-3 bg-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="m-0">Maintenance Dashboard</h2>
+                <button class="btn btn-secondary" t-on-click="loadData">
+                    <i class="fa fa-refresh me-1"/>Refresh
+                </button>
+            </div>
+
+            <t t-if="state.loading">
+                <div class="text-muted p-5 text-center"><i class="fa fa-circle-o-notch fa-spin me-2"/>Loading...</div>
+            </t>
+            <t t-else="">
+                <!-- KPI cards -->
+                <div class="row g-3 mb-4">
+                    <t t-foreach="state.data.kpis" t-as="kpi" t-key="kpi.key">
+                        <div class="col-6 col-lg-4 col-xl-2">
+                            <div class="o_sm_kpi card h-100 shadow-sm" role="button" t-on-click="() => this.openKpi(kpi)">
+                                <div class="card-body">
+                                    <div t-attf-class="o_sm_kpi_icon text-{{ kpi.tone || 'primary' }}">
+                                        <i t-attf-class="fa {{ kpi.icon }}"/>
+                                    </div>
+                                    <div t-attf-class="o_sm_kpi_value text-{{ kpi.tone || 'primary' }}" t-out="kpiValue(kpi)"/>
+                                    <div class="text-muted small" t-out="kpi.label"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Charts -->
+                <div class="row g-3">
+                    <div class="col-12 col-xl-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header fw-bold">Requests by Status</div>
+                            <div class="card-body">
+                                <t t-set="rows" t-value="state.data.charts.by_state"/>
+                                <div t-if="!rows.length" class="text-muted">No data yet.</div>
+                                <div t-foreach="rows" t-as="row" t-key="row.key" class="o_sm_bar_row" role="button"
+                                     t-on-click="() => this.openState(row)">
+                                    <span class="o_sm_bar_label" t-out="row.label"/>
+                                    <div class="o_sm_bar_track">
+                                        <div class="o_sm_bar bg-primary" t-attf-style="width: {{ barPercent(rows, row) }}%"/>
+                                    </div>
+                                    <span class="o_sm_bar_value" t-out="row.value"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header fw-bold">Requests by Priority</div>
+                            <div class="card-body">
+                                <t t-set="rows" t-value="state.data.charts.by_priority"/>
+                                <div t-if="!rows.length" class="text-muted">No data yet.</div>
+                                <div t-foreach="rows" t-as="row" t-key="row.key" class="o_sm_bar_row" role="button"
+                                     t-on-click="() => this.openPriority(row)">
+                                    <span class="o_sm_bar_label" t-out="row.label"/>
+                                    <div class="o_sm_bar_track">
+                                        <div t-attf-class="o_sm_bar {{ row.key === '3' ? 'bg-danger' : row.key === '2' ? 'bg-warning' : row.key === '1' ? 'bg-info' : 'bg-secondary' }}"
+                                             t-attf-style="width: {{ barPercent(rows, row) }}%"/>
+                                    </div>
+                                    <span class="o_sm_bar_value" t-out="row.value"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header fw-bold">Requests by Department</div>
+                            <div class="card-body">
+                                <t t-set="rows" t-value="state.data.charts.by_department"/>
+                                <div t-if="!rows.length" class="text-muted">No data yet.</div>
+                                <div t-foreach="rows" t-as="row" t-key="row.key || 'none'" class="o_sm_bar_row" role="button"
+                                     t-on-click="() => this.openDepartment(row)">
+                                    <span class="o_sm_bar_label" t-out="row.label"/>
+                                    <div class="o_sm_bar_track">
+                                        <div class="o_sm_bar bg-success" t-attf-style="width: {{ barPercent(rows, row) }}%"/>
+                                    </div>
+                                    <span class="o_sm_bar_value" t-out="row.value"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header fw-bold">Maintenance Cost by Month (completed requests)</div>
+                            <div class="card-body">
+                                <t t-set="rows" t-value="state.data.charts.cost_by_month"/>
+                                <div class="o_sm_columns">
+                                    <div t-foreach="rows" t-as="row" t-key="row.key" class="o_sm_column">
+                                        <span class="o_sm_column_value small text-muted" t-out="row.value ? formatMoney(row.value) : ''"/>
+                                        <div class="o_sm_column_track">
+                                            <div class="o_sm_column_bar bg-primary"
+                                                 t-attf-style="height: {{ barPercent(rows, row) }}%"/>
+                                        </div>
+                                        <span class="o_sm_column_label small" t-out="row.label"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

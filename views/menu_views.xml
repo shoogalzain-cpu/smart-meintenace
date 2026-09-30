@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_maintenance_root" name="Smart Maintenance" sequence="60"
+              web_icon="smart_maintenance,static/description/icon.png"
+              groups="smart_maintenance.group_maintenance_user"/>
+
+    <menuitem id="menu_maintenance_dashboard" name="Dashboard" parent="menu_maintenance_root"
+              action="action_maintenance_dashboard" sequence="1"/>
+
+    <menuitem id="menu_maintenance_operations" name="Operations" parent="menu_maintenance_root" sequence="10"/>
+    <menuitem id="menu_maintenance_requests" name="Maintenance Requests" parent="menu_maintenance_operations"
+              action="action_maintenance_request" sequence="10"/>
+    <menuitem id="menu_maintenance_plans" name="Preventive Plans" parent="menu_maintenance_operations"
+              action="action_maintenance_plan" sequence="20"/>
+
+    <menuitem id="menu_maintenance_assets" name="Assets" parent="menu_maintenance_root"
+              action="action_maintenance_asset" sequence="20"/>
+
+    <menuitem id="menu_maintenance_reporting" name="Reporting" parent="menu_maintenance_root" sequence="30"/>
+    <menuitem id="menu_maintenance_analysis" name="Analysis" parent="menu_maintenance_reporting"
+              action="action_maintenance_request_analysis" sequence="10"/>
+</odoo>

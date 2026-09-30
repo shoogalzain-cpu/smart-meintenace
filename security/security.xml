@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Architecture note
+        Access is enforced in three layers:
+          1. ir.model.access.csv  -> which CRUD operations a group may attempt per model
+          2. record rules (below) -> on which records those operations are allowed
+          3. Python guards        -> workflow / manager-only fields in write() and create()
+        View attributes (groups=, readonly=) are only a convenience on top of that.
+    -->
+    <record id="group_maintenance_user" model="res.groups">
+        <field name="name">Maintenance User</field>
+        <field name="comment">Can create maintenance requests, read assets and update the requests assigned to them.</field>
+        <field name="implied_ids" eval="[Command.link(ref('base.group_user'))]"/>
+    </record>
+
+    <record id="group_maintenance_manager" model="res.groups">
+        <field name="name">Maintenance Manager</field>
+        <field name="comment">Full access to assets, requests, costs and preventive plans; assigns technicians.</field>
+        <field name="implied_ids" eval="[Command.link(ref('group_maintenance_user'))]"/>
+    </record>
+
+    <!-- Intentional: Settings administrators get the Manager role (and therefore can open the app). -->
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[Command.link(ref('group_maintenance_manager'))]"/>
+    </record>
+
+    <!-- ============ Multi-company (global rules: apply to everybody) ============ -->
+    <record id="rule_maintenance_asset_company" model="ir.rule">
+        <field name="name">Maintenance Asset: multi-company</field>
+        <field name="model_id" ref="model_maintenance_asset"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_maintenance_request_company" model="ir.rule">
+        <field name="name">Maintenance Request: multi-company</field>
+        <field name="model_id" ref="model_maintenance_request"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_maintenance_plan_company" model="ir.rule">
+        <field name="name">Maintenance Plan: multi-company</field>
+        <field name="model_id" ref="model_maintenance_plan"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_maintenance_part_company" model="ir.rule">
+        <field name="name">Maintenance Part: multi-company</field>
+        <field name="model_id" ref="model_maintenance_part"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <!-- ============ Maintenance Requests ============ -->
+    <record id="rule_request_user_read" model="ir.rule">
+        <field name="name">Maintenance Request: users read all</field>
+        <field name="model_id" ref="model_maintenance_request"/>
+        <field name="groups" eval="[Command.link(ref('group_maintenance_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="rule_request_user_create" model="ir.rule">
+        <field name="name">Maintenance Request: users create their own</field>
+        <field name="model_id" ref="model_maintenance_request"/>
+        <field name="groups" eval="[Command.link(ref('group_maintenance_user'))]"/>
+        <field name="domain_force">[('requested_by', '=', user.id)]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="rule_request_user_write" model="ir.rule">
+        <field name="name">Maintenance Request: users update assigned requests (or their own new ones)</field>
+        <field name="model_id" ref="model_maintenance_request"/>
+        <field name="groups" eval="[Command.link(ref('group_maintenance_user'))]"/>
+        <field name="domain_force">['|', ('assigned_technician_id', '=', user.id), '&amp;', ('requested_by', '=', user.id), ('state', '=', 'new')]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="rule_request_manager_all" model="ir.rule">
+        <field name="name">Maintenance Request: managers full access</field>
+        <field name="model_id" ref="model_maintenance_request"/>
+        <field name="groups" eval="[Command.link(ref('group_maintenance_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- ============ Preventive Plans ============ -->
+    <record id="rule_plan_user_assigned" model="ir.rule">
+        <field name="name">Maintenance Plan: users only see/update their assigned plans</field>
+        <field name="model_id" ref="model_maintenance_plan"/>
+        <field name="groups" eval="[Command.link(ref('group_maintenance_user'))]"/>
+        <field name="domain_force">[('technician_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="rule_plan_manager_all" model="ir.rule">
+        <field name="name">Maintenance Plan: managers full access</field>
+        <field name="model_id" ref="model_maintenance_plan"/>
+        <field name="groups" eval="[Command.link(ref('group_maintenance_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+</odoo>

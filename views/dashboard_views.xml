@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Client action: rendered by the Owl component registered under this tag
+         (static/src/js/dashboard.js). -->
+    <record id="action_maintenance_dashboard" model="ir.actions.client">
+        <field name="name">Maintenance Dashboard</field>
+        <field name="tag">smart_maintenance.dashboard</field>
+    </record>
+</odoo>

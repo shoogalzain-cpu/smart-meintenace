@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_maintenance_request">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Company -->
+                        <div class="row mb-3">
+                            <div class="col-7">
+                                <h5 class="mb-1" t-field="o.company_id.name"/>
+                                <div t-field="o.company_id.partner_id"
+                                     t-options='{"widget": "contact", "fields": ["address", "phone", "email"], "no_marker": true}'/>
+                            </div>
+                            <div class="col-5 text-end">
+                                <h2 class="mb-0">Maintenance Request</h2>
+                                <h3 class="text-muted" t-field="o.request_number"/>
+                                <span class="badge text-bg-secondary" t-field="o.state"/>
+                                <span t-if="o.priority == '3'" class="badge text-bg-danger">Critical</span>
+                            </div>
+                        </div>
+
+                        <!-- Request details -->
+                        <table class="table table-sm table-borderless mb-4">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold" style="width:18%">Request Date</td>
+                                    <td style="width:32%"><span t-field="o.request_date"/></td>
+                                    <td class="fw-bold" style="width:18%">Priority</td>
+                                    <td style="width:32%"><span t-field="o.priority"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Asset</td>
+                                    <td><span t-field="o.asset_id.name"/></td>
+                                    <td class="fw-bold">Asset Code</td>
+                                    <td><span t-field="o.asset_code"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Department</td>
+                                    <td><span t-field="o.department_id"/></td>
+                                    <td class="fw-bold">Requested By</td>
+                                    <td><span t-field="o.requested_by"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Technician</td>
+                                    <td><span t-field="o.assigned_technician_id"/></td>
+                                    <td class="fw-bold">Current Status</td>
+                                    <td><span t-field="o.state"/></td>
+                                </tr>
+                                <tr t-if="o.state == 'completed'">
+                                    <td class="fw-bold">Completion Date</td>
+                                    <td><span t-field="o.actual_completion_date"/></td>
+                                    <td class="fw-bold">Maintenance Duration</td>
+                                    <td><span t-field="o.maintenance_duration"/> day(s)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h5>Subject</h5>
+                        <p t-field="o.name"/>
+
+                        <h5>Problem Description</h5>
+                        <p style="white-space: pre-wrap;" t-field="o.description"/>
+
+                        <h5>Resolution Notes</h5>
+                        <p style="white-space: pre-wrap;">
+                            <span t-if="o.resolution_notes" t-field="o.resolution_notes"/>
+                            <span t-else="" class="text-muted">No resolution notes recorded yet.</span>
+                        </p>
+
+                        <!-- Parts -->
+                        <h5 class="mt-4">Parts Used</h5>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Part</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Unit Cost</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.part_ids" t-as="part">
+                                    <td><span t-field="part.product_name"/></td>
+                                    <td class="text-end"><span t-field="part.quantity"/></td>
+                                    <td class="text-end"><span t-field="part.unit_cost"/></td>
+                                    <td class="text-end"><span t-field="part.total_cost"/></td>
+                                </tr>
+                                <tr t-if="not o.part_ids">
+                                    <td colspan="4" class="text-muted text-center">No parts used.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Costs -->
+                        <div class="row justify-content-end">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr>
+                                            <td>Parts Cost</td>
+                                            <td class="text-end"><span t-field="o.parts_cost"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Service Cost</td>
+                                            <td class="text-end"><span t-field="o.service_cost"/></td>
+                                        </tr>
+                                        <tr class="fw-bold border-top">
+                                            <td>Total Cost</td>
+                                            <td class="text-end"><span t-field="o.actual_cost"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

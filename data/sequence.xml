@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- AST/0001, AST/0002 ... (never resets) -->
+    <record id="seq_maintenance_asset" model="ir.sequence">
+        <field name="name">Maintenance Asset Code</field>
+        <field name="code">maintenance.asset</field>
+        <field name="prefix">AST/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- MR/2026/0001 ... restarts at 0001 each year thanks to date ranges,
+         which Odoo creates on demand for the year of the request. -->
+    <record id="seq_maintenance_request" model="ir.sequence">
+        <field name="name">Maintenance Request Number</field>
+        <field name="code">maintenance.request</field>
+        <field name="prefix">MR/%(range_year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_increment">1</field>
+        <field name="use_date_range" eval="True"/>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

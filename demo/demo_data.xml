@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Departments -->
+    <record id="dept_facilities" model="hr.department"><field name="name">Facilities</field></record>
+    <record id="dept_it" model="hr.department"><field name="name">Information Technology</field></record>
+    <record id="dept_production" model="hr.department"><field name="name">Production</field></record>
+    <record id="dept_logistics" model="hr.department"><field name="name">Logistics</field></record>
+
+    <!-- Employees responsible for assets -->
+    <record id="emp_khalid" model="hr.employee"><field name="name">Khalid Mansour</field><field name="department_id" ref="dept_facilities"/></record>
+    <record id="emp_layla" model="hr.employee"><field name="name">Layla Ibrahim</field><field name="department_id" ref="dept_it"/></record>
+    <record id="emp_yusuf" model="hr.employee"><field name="name">Yusuf Farouk</field><field name="department_id" ref="dept_production"/></record>
+    <record id="emp_nadia" model="hr.employee"><field name="name">Nadia Saleh</field><field name="department_id" ref="dept_logistics"/></record>
+
+    <!-- Users: 1 manager + 3 technicians (groups are granted by the function below) -->
+    <record id="demo_user_manager" model="res.users">
+        <field name="name">Sara Al-Hakim</field>
+        <field name="login">sara.manager</field>
+        <field name="password">sara.manager</field>
+        <field name="email">sara.manager@example.com</field>
+        <field name="notification_type">inbox</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="company_ids" eval="[Command.link(ref('base.main_company'))]"/>
+    </record>
+    <record id="demo_user_tech_1" model="res.users">
+        <field name="name">Omar Haddad</field>
+        <field name="login">omar.tech</field>
+        <field name="password">omar.tech</field>
+        <field name="email">omar.tech@example.com</field>
+        <field name="notification_type">inbox</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="company_ids" eval="[Command.link(ref('base.main_company'))]"/>
+    </record>
+    <record id="demo_user_tech_2" model="res.users">
+        <field name="name">Mona Zaki</field>
+        <field name="login">mona.tech</field>
+        <field name="password">mona.tech</field>
+        <field name="email">mona.tech@example.com</field>
+        <field name="notification_type">inbox</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="company_ids" eval="[Command.link(ref('base.main_company'))]"/>
+    </record>
+    <record id="demo_user_tech_3" model="res.users">
+        <field name="name">Tarek Nasser</field>
+        <field name="login">tarek.tech</field>
+        <field name="password">tarek.tech</field>
+        <field name="email">tarek.tech@example.com</field>
+        <field name="notification_type">inbox</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="company_ids" eval="[Command.link(ref('base.main_company'))]"/>
+    </record>
+    <function model="maintenance.demo.helper" name="_setup_demo_users"/>
+
+    <!-- Assets (codes AST/0001... come from the sequence) -->
+    <record id="asset_hvac_roof" model="maintenance.asset">
+        <field name="name">Rooftop Air Conditioner RTU-01</field>
+        <field name="asset_type">hvac</field>
+        <field name="serial_number">HV-2021-0457</field>
+        <field name="location">Building A - Roof</field>
+        <field name="department_id" ref="dept_facilities"/>
+        <field name="responsible_employee_id" ref="emp_khalid"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=1400)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() + relativedelta(days=120)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_hvac_server" model="maintenance.asset">
+        <field name="name">Server Room Cooling Unit</field>
+        <field name="asset_type">hvac</field>
+        <field name="serial_number">SR-CU-8891</field>
+        <field name="location">Building A - Server Room</field>
+        <field name="department_id" ref="dept_it"/>
+        <field name="responsible_employee_id" ref="emp_layla"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=900)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() + relativedelta(days=300)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_server" model="maintenance.asset">
+        <field name="name">Main Application Server</field>
+        <field name="asset_type">computer</field>
+        <field name="serial_number">DL380-77120</field>
+        <field name="location">Building A - Server Room</field>
+        <field name="department_id" ref="dept_it"/>
+        <field name="responsible_employee_id" ref="emp_layla"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=700)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() + relativedelta(days=20)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_laptop" model="maintenance.asset">
+        <field name="name">Finance Laptop Pool (x5)</field>
+        <field name="asset_type">computer</field>
+        <field name="serial_number">LT-FIN-2023</field>
+        <field name="location">Building B - Finance</field>
+        <field name="department_id" ref="dept_it"/>
+        <field name="responsible_employee_id" ref="emp_layla"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=400)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() - relativedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_conveyor" model="maintenance.asset">
+        <field name="name">Packaging Conveyor Line 1</field>
+        <field name="asset_type">machinery</field>
+        <field name="serial_number">CV-L1-2019-33</field>
+        <field name="location">Plant - Line 1</field>
+        <field name="department_id" ref="dept_production"/>
+        <field name="responsible_employee_id" ref="emp_yusuf"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=2100)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() - relativedelta(days=400)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_press" model="maintenance.asset">
+        <field name="name">Hydraulic Press HP-200</field>
+        <field name="asset_type">machinery</field>
+        <field name="serial_number">HP200-5541</field>
+        <field name="location">Plant - Line 2</field>
+        <field name="department_id" ref="dept_production"/>
+        <field name="responsible_employee_id" ref="emp_yusuf"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=2500)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() - relativedelta(days=700)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_generator" model="maintenance.asset">
+        <field name="name">Backup Generator 250 kVA</field>
+        <field name="asset_type">equipment</field>
+        <field name="serial_number">GEN-250-1187</field>
+        <field name="location">Plant - Utility Yard</field>
+        <field name="department_id" ref="dept_facilities"/>
+        <field name="responsible_employee_id" ref="emp_khalid"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=1800)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() + relativedelta(days=90)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_truck" model="maintenance.asset">
+        <field name="name">Delivery Truck ABC-123</field>
+        <field name="asset_type">vehicle</field>
+        <field name="serial_number">VIN-3FA6P0H7XJ</field>
+        <field name="location">Logistics Yard</field>
+        <field name="department_id" ref="dept_logistics"/>
+        <field name="responsible_employee_id" ref="emp_nadia"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=1000)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() + relativedelta(days=200)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_forklift" model="maintenance.asset">
+        <field name="name">Forklift FL-03</field>
+        <field name="asset_type">vehicle</field>
+        <field name="serial_number">FL03-2018-902</field>
+        <field name="location">Warehouse</field>
+        <field name="department_id" ref="dept_logistics"/>
+        <field name="responsible_employee_id" ref="emp_nadia"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=2200)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() - relativedelta(days=500)).strftime('%Y-%m-%d')"/>
+        <field name="status">active</field>
+    </record>
+    <record id="asset_elevator" model="maintenance.asset">
+        <field name="name">Main Building Elevator</field>
+        <field name="asset_type">building</field>
+        <field name="serial_number">ELV-B-0021</field>
+        <field name="location">Building B - Lobby</field>
+        <field name="department_id" ref="dept_facilities"/>
+        <field name="responsible_employee_id" ref="emp_khalid"/>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(days=3000)).strftime('%Y-%m-%d')"/>
+        <field name="warranty_expiry" eval="(DateTime.today() - relativedelta(days=1000)).strftime('%Y-%m-%d')"/>
+        <field name="status">retired</field>
+    </record>
+
+    <!-- Requests -->
+    <record id="req_completed" model="maintenance.request">
+        <field name="name">Rooftop AC not cooling</field>
+        <field name="asset_id" ref="asset_hvac_roof"/>
+        <field name="priority">2</field>
+        <field name="requested_by" ref="base.user_admin"/>
+        <field name="assigned_technician_id" ref="demo_user_tech_1"/>
+        <field name="request_date" eval="(DateTime.today() - relativedelta(days=14)).strftime('%Y-%m-%d')"/>
+        <field name="expected_completion_date" eval="(DateTime.today() - relativedelta(days=8)).strftime('%Y-%m-%d')"/>
+        <field name="description">The rooftop unit blows warm air on floors 2 and 3. Compressor cycles on and off every few minutes.</field>
+        <field name="service_cost">120</field>
+        <field name="estimated_cost">450</field>
+        <field name="state">in_progress</field>
+    </record>
+    <record id="req_critical" model="maintenance.request">
+        <field name="name">Conveyor motor overheating - line stopped</field>
+        <field name="asset_id" ref="asset_conveyor"/>
+        <field name="priority">3</field>
+        <field name="requested_by" ref="demo_user_tech_3"/>
+        <field name="assigned_technician_id" ref="demo_user_tech_2"/>
+        <field name="request_date" eval="(DateTime.today() - relativedelta(days=1)).strftime('%Y-%m-%d')"/>
+        <field name="expected_completion_date" eval="(DateTime.today() + relativedelta(days=2)).strftime('%Y-%m-%d')"/>
+        <field name="description">Line 1 stopped after the main drive motor tripped on thermal protection. Production is blocked.</field>
+        <field name="service_cost">0</field>
+        <field name="estimated_cost">1800</field>
+        <field name="state">in_progress</field>
+    </record>
+    <record id="req_overdue" model="maintenance.request">
+        <field name="name">Forklift hydraulic leak</field>
+        <field name="asset_id" ref="asset_forklift"/>
+        <field name="priority">2</field>
+        <field name="requested_by" ref="demo_user_tech_1"/>
+        <field name="assigned_technician_id" ref="demo_user_tech_3"/>
+        <field name="request_date" eval="(DateTime.today() - relativedelta(days=12)).strftime('%Y-%m-%d')"/>
+        <field name="expected_completion_date" eval="(DateTime.today() - relativedelta(days=5)).strftime('%Y-%m-%d')"/>
+        <field name="description">Hydraulic oil leaking under the mast. Forklift restricted until repaired.</field>
+        <field name="service_cost">0</field>
+        <field name="estimated_cost">600</field>
+        <field name="state">assigned</field>
+    </record>
+    <record id="req_waiting" model="maintenance.request">
+        <field name="name">Server room cooling unit alarm</field>
+        <field name="asset_id" ref="asset_hvac_server"/>
+        <field name="priority">1</field>
+        <field name="requested_by" ref="demo_user_tech_2"/>
+        <field name="assigned_technician_id" ref="demo_user_tech_1"/>
+        <field name="request_date" eval="(DateTime.today() - relativedelta(days=6)).strftime('%Y-%m-%d')"/>
+        <field name="expected_completion_date" eval="(DateTime.today() + relativedelta(days=4)).strftime('%Y-%m-%d')"/>
+        <field name="description">Low-pressure alarm on the cooling unit. Refrigerant leak suspected on the condenser coil.</field>
+        <field name="service_cost">150</field>
+        <field name="estimated_cost">900</field>
+        <field name="state">waiting_parts</field>
+    </record>
+    <record id="req_new" model="maintenance.request">
+        <field name="name">Replace worn tyres on delivery truck</field>
+        <field name="asset_id" ref="asset_truck"/>
+        <field name="priority">0</field>
+        <field name="requested_by" ref="demo_user_tech_1"/>
+        <field name="request_date" eval="(DateTime.today() + relativedelta(days=0)).strftime('%Y-%m-%d')"/>
+        <field name="expected_completion_date" eval="(DateTime.today() + relativedelta(days=15)).strftime('%Y-%m-%d')"/>
+        <field name="description">Front tyres are close to the legal wear limit. Replace before the winter season.</field>
+        <field name="service_cost">0</field>
+        <field name="estimated_cost">700</field>
+        <field name="state">new</field>
+    </record>
+    <record id="req_review" model="maintenance.request">
+        <field name="name">Generator fails monthly load test</field>
+        <field name="asset_id" ref="asset_generator"/>
+        <field name="priority">2</field>
+        <field name="requested_by" ref="demo_user_tech_3"/>
+        <field name="request_date" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d')"/>
+        <field name="expected_completion_date" eval="(DateTime.today() + relativedelta(days=7)).strftime('%Y-%m-%d')"/>
+        <field name="description">Generator drops voltage after 10 minutes under load during the monthly test.</field>
+        <field name="service_cost">0</field>
+        <field name="estimated_cost">1200</field>
+        <field name="state">under_review</field>
+    </record>
+
+    <!-- Parts (created while the requests are still open) -->
+    <record id="part_1" model="maintenance.part">
+        <field name="request_id" ref="req_completed"/>
+        <field name="product_name">Compressor contactor 40A</field>
+        <field name="quantity">1</field>
+        <field name="unit_cost">85.0</field>
+    </record>
+    <record id="part_2" model="maintenance.part">
+        <field name="request_id" ref="req_completed"/>
+        <field name="product_name">Run capacitor 45/5 uF</field>
+        <field name="quantity">2</field>
+        <field name="unit_cost">22.5</field>
+    </record>
+    <record id="part_3" model="maintenance.part">
+        <field name="request_id" ref="req_completed"/>
+        <field name="product_name">Refrigerant R410A (kg)</field>
+        <field name="quantity">3</field>
+        <field name="unit_cost">18.0</field>
+    </record>
+    <record id="part_4" model="maintenance.part">
+        <field name="request_id" ref="req_critical"/>
+        <field name="product_name">Drive motor bearing set 6312</field>
+        <field name="quantity">2</field>
+        <field name="unit_cost">64.0</field>
+    </record>
+    <record id="part_5" model="maintenance.part">
+        <field name="request_id" ref="req_critical"/>
+        <field name="product_name">Thermal overload relay</field>
+        <field name="quantity">1</field>
+        <field name="unit_cost">120.0</field>
+    </record>
+    <record id="part_6" model="maintenance.part">
+        <field name="request_id" ref="req_waiting"/>
+        <field name="product_name">Condenser coil assembly</field>
+        <field name="quantity">1</field>
+        <field name="unit_cost">640.0</field>
+    </record>
+    <record id="part_7" model="maintenance.part">
+        <field name="request_id" ref="req_waiting"/>
+        <field name="product_name">Refrigerant R407C (kg)</field>
+        <field name="quantity">4</field>
+        <field name="unit_cost">21.0</field>
+    </record>
+    <record id="part_8" model="maintenance.part">
+        <field name="request_id" ref="req_overdue"/>
+        <field name="product_name">Hydraulic hose 3/8"</field>
+        <field name="quantity">2</field>
+        <field name="unit_cost">38.0</field>
+    </record>
+    <record id="part_9" model="maintenance.part">
+        <field name="request_id" ref="req_overdue"/>
+        <field name="product_name">Hydraulic oil 20L drum</field>
+        <field name="quantity">1</field>
+        <field name="unit_cost">95.0</field>
+    </record>
+
+    <!-- Complete the first request through the real workflow (sets date, duration, notifications) -->
+    <function model="maintenance.request" name="write"
+              eval="[[ref('req_completed')], {'state': 'completed', 'actual_completion_date': (DateTime.today() - relativedelta(days=9)).strftime('%Y-%m-%d'), 'resolution_notes': 'Replaced the faulty contactor and capacitor, recharged refrigerant. Unit tested for 2 hours: supply air at 12 C.'}]"/>
+
+    <!-- Preventive maintenance plans -->
+    <record id="plan_hvac" model="maintenance.plan">
+        <field name="name">Monthly HVAC filter &amp; coil inspection</field>
+        <field name="asset_id" ref="asset_hvac_roof"/>
+        <field name="technician_id" ref="demo_user_tech_1"/>
+        <field name="frequency">months</field>
+        <field name="interval">1</field>
+        <field name="next_maintenance_date" eval="(DateTime.today() + relativedelta(days=5)).strftime('%Y-%m-%d')"/>
+        <field name="last_maintenance_date" eval="(DateTime.today() - relativedelta(days=25)).strftime('%Y-%m-%d')"/>
+        <field name="instructions">1. Replace filters. 2. Clean coils. 3. Check refrigerant pressure. 4. Record supply/return temperatures.</field>
+    </record>
+    <record id="plan_generator" model="maintenance.plan">
+        <field name="name">Quarterly generator load test</field>
+        <field name="asset_id" ref="asset_generator"/>
+        <field name="technician_id" ref="demo_user_tech_2"/>
+        <field name="frequency">months</field>
+        <field name="interval">3</field>
+        <field name="next_maintenance_date" eval="(DateTime.today() - relativedelta(days=4)).strftime('%Y-%m-%d')"/>
+        <field name="last_maintenance_date" eval="(DateTime.today() - relativedelta(days=94)).strftime('%Y-%m-%d')"/>
+        <field name="instructions">1. Check oil and coolant. 2. Run 30 min under 75% load. 3. Test the automatic transfer switch.</field>
+    </record>
+    <record id="plan_truck" model="maintenance.plan">
+        <field name="name">Annual truck service</field>
+        <field name="asset_id" ref="asset_truck"/>
+        <field name="technician_id" ref="demo_user_tech_3"/>
+        <field name="frequency">years</field>
+        <field name="interval">1</field>
+        <field name="next_maintenance_date" eval="(DateTime.today() + relativedelta(days=60)).strftime('%Y-%m-%d')"/>
+        <field name="last_maintenance_date" eval="(DateTime.today() - relativedelta(days=305)).strftime('%Y-%m-%d')"/>
+        <field name="instructions">Full service: oil, filters, brakes, tyres, lights, safety inspection.</field>
+    </record>
+</odoo>
